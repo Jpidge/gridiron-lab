@@ -494,15 +494,59 @@ def test_site_has_a_single_charcoal_theme() -> None:
         assert hex_value in css
 
 
+def test_site_header_brand_gap_is_wide() -> None:
+    css = (SITE / "app.css").read_text(encoding="utf-8")
+    # Owner call (2026-10-31): roughly four to five spaces of air between
+    # the emblem and the page title in the header brand row.
+    assert ".brand { display: flex; align-items: center; gap: 30px;" in css
+
+
+def test_site_splash_lasts_long_enough_to_read() -> None:
+    script = (SITE / "app.js").read_text(encoding="utf-8")
+    # Owner call (2026-10-31): the AUSPICIA splash flash runs a couple of
+    # beats longer than the original 550ms — long enough to read, not long
+    # enough to annoy. The 4s failsafe stays as the outer bound.
+    assert "1250 - (Date.now() - splashStart)" in script
+    assert "setTimeout(hideSplash, 4000)" in script
+
+
+def test_site_team_picker_sits_top_right_without_a_label() -> None:
+    html = (SITE / "index.html").read_text(encoding="utf-8")
+    css = (SITE / "app.css").read_text(encoding="utf-8")
+    # Owner calls (2026-10-31): the team dropdown moves to the top of the
+    # Team view, right-aligned, and its visible "Team" label text is gone
+    # (the label survives screen-reader-only, for accessibility).
+    assert 'class="hero-side"' in html
+    assert ".hero-side { display: flex; flex-direction: column;" in css
+    assert '<span class="sr">Team</span>' in html
+    assert 'for="team-select">Team' not in html
+
+
 def test_site_control_center_states_the_engine_record() -> None:
     html = (SITE / "control.html").read_text(encoding="utf-8")
     assert "Control Center" in html
+    # Owner call (2026-10-31): the back-link to the dashboard says AUSPICIA.
+    assert 'class="cc-back" href="index.html">AUSPICIA</a>' in html
+    assert "Dashboard →" not in html
     assert 'href="app.css"' in html
     assert 'src="workflow.svg"' in html
     assert (SITE / "workflow.svg").exists()
     # The dashboard footer links to it; it is a separate page, not a tab.
     index = (SITE / "index.html").read_text(encoding="utf-8")
     assert 'href="control.html"' in index
+    # The page explains what promotion is: a title, not a usage switch.
+    assert "a title, not a switch" in html
+    assert "already runs this model's projections" in html
+    assert "<dt>Promoted</dt>" in html
+    # LightGBM is defined, and defined terms link down to their definitions.
+    assert 'id="def-lightgbm"' in html
+    assert "gradient boosting" in html
+    assert 'href="#def-lightgbm"' in html
+    assert 'id="def-mae"' in html
+    assert 'id="def-bias"' in html
+    assert "systematic lean" in html
+    assert "Mean absolute error" in html
+    assert 'class="deflink"' in html
     # Gate status is stated honestly: not promoted, bias is the failure.
     assert "Promoted:" in html
     assert '<span class="fail">No</span>' in html
